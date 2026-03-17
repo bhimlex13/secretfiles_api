@@ -48,6 +48,34 @@ exports.createPost = async (req, res) => {
     }
 };
 
+// Update a post
+exports.updatePost = async (req, res) => {
+    try {
+        const { title, content, tags, isAnonymous } = req.body;
+        const post = await Post.findById(req.params.id);
+
+        if (!post) {
+            return res.status(404).json({ message: 'Entry not found' });
+        }
+
+        // Verify the person editing is the actual author
+        if (post.author.toString() !== req.user._id.toString()) {
+            return res.status(401).json({ message: 'Not authorized to edit this entry' });
+        }
+
+        post.title = title;
+        post.content = content;
+        post.tags = tags || [];
+        post.isAnonymous = isAnonymous;
+        post.editedAt = Date.now(); // Stamp the edit time
+
+        await post.save();
+        res.status(200).json(post);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
 // Toggle a reaction (Add or Remove)
 exports.toggleReaction = async (req, res) => {
     try {
