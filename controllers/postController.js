@@ -1,4 +1,5 @@
 const Post = require('../models/Post');
+const mongoose = require('mongoose');
 
 // Get all posts for the feed
 exports.getPosts = async (req, res) => {
@@ -16,6 +17,10 @@ exports.getPosts = async (req, res) => {
 // Get a single post by ID
 exports.getPostById = async (req, res) => {
     try {
+        if (!mongoose.isObjectIdOrHexString(req.params.id)) {
+            return res.status(400).json({ message: 'Invalid post ID' });
+        }
+
         const post = await Post.findById(req.params.id)
             .populate('author', 'username')
             .populate('comments.user', 'username');
@@ -25,7 +30,8 @@ exports.getPostById = async (req, res) => {
         }
         res.status(200).json(post);
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        console.error('Failed to fetch post:', error.message);
+        res.status(500).json({ message: 'Failed to fetch post' });
     }
 };
 

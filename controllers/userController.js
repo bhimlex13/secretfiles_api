@@ -94,20 +94,27 @@ exports.getBookmarks = async (req, res) => {
             return res.status(404).json({ message: 'User not found' });
         }
 
-        res.status(200).json(user.bookmarks.reverse());
+        const bookmarks = (user.bookmarks || []).filter(Boolean);
+        res.status(200).json(bookmarks.reverse());
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        console.error('Failed to fetch bookmarks:', error.message);
+        res.status(500).json({ message: 'Failed to fetch bookmarks' });
     }
 };
 
 // Get Logged-in User's Private Library (All posts)
 exports.getMyPosts = async (req, res) => {
     try {
+        if (!req.user) {
+            return res.status(401).json({ message: 'Authentication required' });
+        }
+
         const posts = await Post.find({ author: req.user._id })
             .populate('author', 'username')
             .sort({ createdAt: -1 });
         res.status(200).json(posts);
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        console.error('Failed to fetch user posts:', error.message);
+        res.status(500).json({ message: 'Failed to fetch user posts' });
     }
 };
